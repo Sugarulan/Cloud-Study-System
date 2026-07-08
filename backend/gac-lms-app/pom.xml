@@ -29,6 +29,33 @@
             <version>${project.version}</version>
         </dependency>
 
+        <!-- 王茗瑾负责的 5 个业务模块 -->
+        <dependency>
+            <groupId>com.gac.lms</groupId>
+            <artifactId>gac-lms-module-account</artifactId>
+            <version>${project.version}</version>
+        </dependency>
+        <dependency>
+            <groupId>com.gac.lms</groupId>
+            <artifactId>gac-lms-module-person</artifactId>
+            <version>${project.version}</version>
+        </dependency>
+        <dependency>
+            <groupId>com.gac.lms</groupId>
+            <artifactId>gac-lms-module-question</artifactId>
+            <version>${project.version}</version>
+        </dependency>
+        <dependency>
+            <groupId>com.gac.lms</groupId>
+            <artifactId>gac-lms-module-paper</artifactId>
+            <version>${project.version}</version>
+        </dependency>
+        <dependency>
+            <groupId>com.gac.lms</groupId>
+            <artifactId>gac-lms-module-exam</artifactId>
+            <version>${project.version}</version>
+        </dependency>
+
         <!-- 方雨菲负责的 5 个业务模块 -->
         <dependency>
             <groupId>com.gac.lms</groupId>

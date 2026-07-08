@@ -6,14 +6,19 @@ server:
 spring:
   application:
     name: gac-lms
-  profiles:
-    active: dev
+  # ====================================================================
+  # 默认 profile：不激活 dev/docker，直接使用本文件的 H2 内存数据库，
+  # 真正“开箱即用、零外部中间件”即可启动。
+  # 如需接入真实 MySQL/Redis/MinIO，启动时追加：
+  #   --spring.profiles.active=dev
+  # 并按 application-dev.yml 启动 docker-compose 提供的中间件。
+  # ====================================================================
   jackson:
     date-format: yyyy-MM-dd HH:mm:ss
     time-zone: GMT+8
     default-property-inclusion: non_null
 
-  # ===== 数据源（dev 默认 H2 内存库，开箱即用） =====
+  # ===== 数据源（默认 H2 内存库，开箱即用，无需安装任何外部服务） =====
   datasource:
     url: jdbc:h2:mem:gac_lms;MODE=MySQL;DB_CLOSE_DELAY=-1
     driver-class-name: org.h2.Driver
@@ -26,7 +31,10 @@ spring:
       enabled: true
       path: /h2-console
 
-  # ===== Redis（dev 默认嵌入式，生产切换 standalone/cluster） =====
+  # ===== Redis（Lettuce 客户端懒连接：默认启动不强依赖外部 Redis） =====
+  # 默认指向 localhost:6379；若未启动 Redis，应用仍可启动，
+  # 仅在真正调用 Redis 时才会报错（如答题暂存）。
+  # 启动 docker-compose 的 redis 后即可正常使用。
   data:
     redis:
       host: ${REDIS_HOST:localhost}
@@ -53,8 +61,9 @@ mybatis-plus:
       logic-delete-field: deleted
       logic-delete-value: 1
       logic-not-delete-value: 0
+      id-type: ASSIGN_ID
 
-# ===== MinIO =====
+# ===== MinIO=====
 gac:
   lms:
     minio:
@@ -62,24 +71,17 @@ gac:
       access-key: ${MINIO_ACCESS_KEY:minioadmin}
       secret-key: ${MINIO_SECRET_KEY:minioadmin}
       bucket: ${MINIO_BUCKET:gac-lms}
-    # ===== AI 配置（dev 默认 mock） =====
-    # 生产环境切换为 openai-compatible 并配置 spring.ai.openai.*
+    # ===== AI 配置（默认 mock，零依赖即可跑通主流程） =====
+    # 切换为 openai-compatible 后将启用 OpenAICompatibleLLMProvider（RestClient 直连）
     ai:
       provider: ${AI_PROVIDER:mock}
+      openai:
+        base-url: ${OPENAI_BASE_URL:http://internal-llm.gac.local/v1}
+        api-key: ${OPENAI_API_KEY:sk-placeholder}
+        model: ${OPENAI_MODEL:qwen-plus}
+        temperature: 0.3
 
-# ===== Spring AI（OpenAI 兼容协议） =====
-# 当 gac.lms.ai.provider=openai-compatible 时生效
-spring:
-  ai:
-    openai:
-      base-url: ${OPENAI_BASE_URL:http://internal-llm.gac.local/v1}
-      api-key: ${OPENAI_API_KEY:sk-placeholder}
-      chat:
-        options:
-          model: ${OPENAI_MODEL:qwen-plus}
-          temperature: 0.3
-
-# ===== Resilience4j =====
+# ===== Resilience4j=====
 resilience4j:
   circuitbreaker:
     instances:
@@ -111,4 +113,3 @@ logging:
   level:
     root: INFO
     com.gac.lms: DEBUG
-    org.springframework.ai: INFO

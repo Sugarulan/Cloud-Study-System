@@ -10,9 +10,9 @@
         <version>1.0.0-SNAPSHOT</version>
     </parent>
 
-    <artifactId>gac-lms-module-evaluation</artifactId>
-    <name>gac-lms-module-evaluation</name>
-    <description>3.3.6 评卷模块：自动评阅 / AI 评阅 / 人工评阅 / 复核 / 发布</description>
+    <artifactId>gac-lms-module-paper</artifactId>
+    <name>gac-lms-module-paper</name>
+    <description>3.3.4 试卷管理：试卷 CRUD、抽题组卷、发布</description>
 
     <dependencies>
         <dependency>
@@ -24,17 +24,6 @@
             <groupId>com.gac.lms</groupId>
             <artifactId>gac-lms-infrastructure</artifactId>
             <version>${project.version}</version>
-        </dependency>
-        <dependency>
-            <groupId>com.gac.lms</groupId>
-            <artifactId>gac-lms-ai</artifactId>
-            <version>${project.version}</version>
-        </dependency>
-
-        <!-- Spring Modulith：@ApplicationModule / @PackageInfo 模块边界声明 -->
-        <dependency>
-            <groupId>org.springframework.modulith</groupId>
-            <artifactId>spring-modulith-core</artifactId>
         </dependency>
     </dependencies>
 </project>

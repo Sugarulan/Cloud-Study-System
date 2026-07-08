@@ -10,9 +10,9 @@
         <version>1.0.0-SNAPSHOT</version>
     </parent>
 
-    <artifactId>gac-lms-module-evaluation</artifactId>
-    <name>gac-lms-module-evaluation</name>
-    <description>3.3.6 评卷模块：自动评阅 / AI 评阅 / 人工评阅 / 复核 / 发布</description>
+    <artifactId>gac-lms-module-account</artifactId>
+    <name>gac-lms-module-account</name>
+    <description>3.3.1 账号管理：账号创建/更新/停用、角色管理、密码策略/重置</description>
 
     <dependencies>
         <dependency>
@@ -24,17 +24,6 @@
             <groupId>com.gac.lms</groupId>
             <artifactId>gac-lms-infrastructure</artifactId>
             <version>${project.version}</version>
-        </dependency>
-        <dependency>
-            <groupId>com.gac.lms</groupId>
-            <artifactId>gac-lms-ai</artifactId>
-            <version>${project.version}</version>
-        </dependency>
-
-        <!-- Spring Modulith：@ApplicationModule / @PackageInfo 模块边界声明 -->
-        <dependency>
-            <groupId>org.springframework.modulith</groupId>
-            <artifactId>spring-modulith-core</artifactId>
         </dependency>
     </dependencies>
 </project>

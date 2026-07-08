@@ -23,7 +23,6 @@
 ```
 Cloud-Study-System/
 ├── backend/                  # Spring Boot 3 多模块后端
-│   ├── gac-lms-dependencies/ # 统一依赖版本管理（仅 POM）
 │   ├── gac-lms-common/       # 公共组件：异常、响应包装、工具类
 │   ├── gac-lms-infrastructure/# 基础设施：MySQL、Redis、MinIO、安全
 │   ├── gac-lms-ai/           # Spring AI 适配层（评卷 / 错题解析 / 抽题）

@@ -59,6 +59,19 @@ public class Result<T> implements Serializable {
         return r;
     }
 
+    /**
+     * 通过裸错误码 + 自定义消息构造失败响应。
+     *
+     * <p>适用于错误码来自 {@link com.gac.lms.common.exception.BusinessException#getCode()}
+     * 等动态来源的场景。</p>
+     */
+    public static <T> Result<T> fail(int code, String message) {
+        Result<T> r = new Result<>();
+        r.setCode(code);
+        r.setMessage(message);
+        return r;
+    }
+
     public boolean isSuccess() {
         return this.code == ErrorCode.SUCCESS.getCode();
     }

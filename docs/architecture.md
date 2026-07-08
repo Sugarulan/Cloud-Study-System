@@ -43,7 +43,6 @@
 采用 **多模块 Maven 工程**，按业务域拆分：
 
 ```
-gac-lms-dependencies          ← 仅 BOM，统一版本
 gac-lms-common                ← 公共：异常、响应包装、常量、工具
 gac-lms-infrastructure        ← 基础设施：MySQL/Redis/MinIO/Security
 gac-lms-ai                    ← AI 适配层（Provider 接口）

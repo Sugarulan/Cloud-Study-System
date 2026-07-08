@@ -21,15 +21,15 @@
 
     <!--
         模块说明：
-          1. gac-lms-dependencies  仅 BOM，统一版本
-          2. gac-lms-common        公共组件
-          3. gac-lms-infrastructure 基础设施：MySQL/Redis/MinIO/Security
-          4. gac-lms-ai            AI 适配层（方雨菲）
-          5. gac-lms-module-*      业务模块
-          6. gac-lms-app           启动模块（聚合）
+          1. gac-lms-common        公共组件
+          2. gac-lms-infrastructure 基础设施：MySQL/Redis/MinIO/Security
+          3. gac-lms-ai            AI 适配层（方雨菲）
+          4. gac-lms-module-*      业务模块
+          5. gac-lms-app           启动模块（聚合）
+        说明：版本统一由本 POM 的 dependencyManagement 集中管理，
+             继承 spring-boot-starter-parent 已提供大部分依赖管理。
     -->
     <modules>
-        <module>gac-lms-dependencies</module>
         <module>gac-lms-common</module>
         <module>gac-lms-infrastructure</module>
         <module>gac-lms-ai</module>
@@ -63,19 +63,15 @@
 
     <dependencyManagement>
         <dependencies>
-            <!-- 内部 BOM：统一所有 gac-lms-* 模块的版本 -->
-            <dependency>
-                <groupId>com.gac.lms</groupId>
-                <artifactId>gac-lms-dependencies</artifactId>
-                <version>${project.version}</version>
-                <type>pom</type>
-                <scope>import</scope>
-            </dependency>
-
-            <!-- 第三方版本锁定 -->
+            <!-- 第三方版本锁定（spring-boot-starter-parent 已管理大部分） -->
             <dependency>
                 <groupId>com.baomidou</groupId>
                 <artifactId>mybatis-plus-spring-boot3-starter</artifactId>
+                <version>${mybatis-plus.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>com.baomidou</groupId>
+                <artifactId>mybatis-plus-annotation</artifactId>
                 <version>${mybatis-plus.version}</version>
             </dependency>
             <dependency>
@@ -106,6 +102,16 @@
             <dependency>
                 <groupId>io.jsonwebtoken</groupId>
                 <artifactId>jjwt-api</artifactId>
+                <version>${jjwt.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>io.jsonwebtoken</groupId>
+                <artifactId>jjwt-impl</artifactId>
+                <version>${jjwt.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>io.jsonwebtoken</groupId>
+                <artifactId>jjwt-jackson</artifactId>
                 <version>${jjwt.version}</version>
             </dependency>
             <dependency>

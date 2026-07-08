@@ -2,7 +2,7 @@
 
 > 本文档为 W1 末冻结的接口契约初稿，**冻结后字段不再随意变更**。
 > 所有模块接口统一前缀 `/api/v1`，统一响应格式见 §1。
-> 方雨菲负责的 5 个模块接口见 §3。
+> 王茗瑾负责的 5 个模块接口见 §2，方雨菲负责的 5 个模块接口见 §3，AI 模块接口见 §4。
 
 ---
 
@@ -55,15 +55,119 @@ GET /api/v1/xxx?pageNum=1&pageSize=10&keyword=xxx
 
 ---
 
-## 2. 王茗瑾负责的模块（参考，完整契约见王茗瑾文档）
+## 2. 王茗瑾���责的 5 个模块
 
-| 模块 | 关键接口（占位） |
-|------|----------------|
-| 账号管理 | `POST /api/v1/auth/login`、`GET /api/v1/accounts` |
-| 人员管理 | `GET /api/v1/persons`、`POST /api/v1/persons/import` |
-| 题目管理 | `GET /api/v1/questions`、`POST /api/v1/questions` |
-| 试卷管理 | `POST /api/v1/papers`、`POST /api/v1/papers/{id}/publish` |
-| 考试管理 | `POST /api/v1/exams`、`POST /api/v1/exams/{id}/publish` |
+### 2.1 账号管理（3.3.1）
+
+```
+POST   /api/v1/auth/login                # 登录（返回 JWT）
+POST   /api/v1/auth/logout               # 登出
+GET    /api/v1/accounts                  # 账号列表（分页 + 筛选）
+POST   /api/v1/accounts                  # 创建账号
+GET    /api/v1/accounts/{id}             # 账号详情
+PUT    /api/v1/accounts/{id}             # 更新账号
+DELETE /api/v1/accounts/{id}             # 停用账号
+POST   /api/v1/accounts/{id}/reset-password  # 重置密码
+POST   /api/v1/accounts/{id}/roles       # 分配角色
+GET    /api/v1/roles                     # 角色列表
+POST   /api/v1/roles                     # 创建角色
+```
+
+#### 登录请求
+
+```http
+POST /api/v1/auth/login
+Content-Type: application/json
+
+{
+  "username": "zhangsan",
+  "password": "EncryptedPwd@123"
+}
+```
+
+#### 登录响应
+
+```json
+{
+  "code": 0,
+  "data": {
+    "token": "eyJhbGciOiJIUzI1NiJ9...",
+    "expiresIn": 7200,
+    "userInfo": {
+      "id": 1001,
+      "username": "zhangsan",
+      "realName": "张三",
+      "roles": ["STUDENT"]
+    }
+  }
+}
+```
+
+### 2.2 人员信息管理（3.3.2）
+
+```
+GET    /api/v1/persons                   # 人员列表（按系统/部门筛选）
+POST   /api/v1/persons                   # 创建人员
+GET    /api/v1/persons/{id}              # 人员详情
+PUT    /api/v1/persons/{id}              # 更新人员
+POST   /api/v1/persons/{id}/link-account # 关联账号
+POST   /api/v1/persons/import            # Excel 批量导入
+GET    /api/v1/persons/export            # Excel 导出
+```
+
+### 2.3 题目管理（3.3.3）
+
+```
+GET    /api/v1/questions                 # 题目列表（分页 + 分类筛选）
+POST   /api/v1/questions                 # 创建题目
+GET    /api/v1/questions/{id}            # 题目详情
+PUT    /api/v1/questions/{id}            # 更新题目
+DELETE /api/v1/questions/{id}            # 删除题目
+POST   /api/v1/questions/import          # 批量导入
+GET    /api/v1/questions/export          # 批量导出
+GET    /api/v1/questions/tags            # 标签列表
+GET    /api/v1/questions/categories      # 分类树
+```
+
+### 2.4 试卷管理（3.3.4）
+
+```
+GET    /api/v1/papers                    # 试卷列表
+POST   /api/v1/papers                    # 创建试卷（手动选题）
+POST   /api/v1/papers/auto               # 抽题组卷（按策略自动）
+GET    /api/v1/papers/{id}               # 试卷详情
+PUT    /api/v1/papers/{id}               # 更新试卷
+DELETE /api/v1/papers/{id}               # 删除试卷
+POST   /api/v1/papers/{id}/publish       # 发布试卷
+POST   /api/v1/papers/{id}/unpublish     # 取消发布
+```
+
+### 2.5 考试管理（3.3.5）
+
+```
+GET    /api/v1/exams                     # 考试列表
+POST   /api/v1/exams                     # 创建考试
+GET    /api/v1/exams/{id}                # 考试详情
+PUT    /api/v1/exams/{id}                # 更新考试
+DELETE /api/v1/exams/{id}                # 删除考试
+POST   /api/v1/exams/{id}/publish        # 发布考试
+POST   /api/v1/exams/{id}/close          # 关闭考试
+GET    /api/v1/exams/{id}/scope          # 参考人员范围
+PUT    /api/v1/exams/{id}/scope          # 设置参考人员
+GET    /api/v1/exams/{id}/submit-rules   # 交卷规则
+PUT    /api/v1/exams/{id}/submit-rules   # 设置交卷规则
+```
+
+#### 交卷规则
+
+```json
+{
+  "autoSubmit": true,
+  "autoSubmitOnTimeout": true,
+  "allowManualSubmit": true,
+  "allowSaveProgress": true
+}
+```
 
 ---
 

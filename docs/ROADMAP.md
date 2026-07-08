@@ -11,7 +11,7 @@
 
 ### 你的任务
 - 后端多模块脚手架（5 个业务模块空壳）
-- Spring AI 适配层（Provider 接口 + Mock）
+- AI 适配层（Provider 接口 + Mock + RestTemplate 直连 OpenAI 兼容 API）
 - 前端 Vue3 脚手架（学员端 3 个空页面）
 - Docker Compose（MySQL / Redis / MinIO）
 - 接口契约文档
@@ -70,7 +70,7 @@
 **目标**：AI 评卷 + AI 错题解析 + AI 文档抽题 全部跑通
 
 ### 你的任务
-- Spring AI 真实 Provider 接入（企业内网 REST API）
+- 真实 Provider 接入（企业内网 OpenAI 兼容 API）
 - AI 评卷 Prompt 设计与调试
 - AI 错题解析
 - AI 文档 → 题目抽取（PDF / Word / Markdown）

@@ -2,6 +2,14 @@
 -- GAC-LMS 完整数据库 Schema（文档版）
 -- 实际执行请使用 backend/gac-lms-app/src/main/resources/db/schema.sql
 -- 此处仅作为设计文档，方便评审与讨论
+--
+-- W1 状态：
+--   ✅ 已并入 schema.sql（方雨菲）：grade_record / grade_detail /
+--                                exam_taking / wrong_question /
+--                                knowledge_category / knowledge_doc /
+--                                knowledge_doc_version / sys_message
+--   ⏳ W2 补充（王茗瑾）：account / person / department / role /
+--                       permission / question / paper / exam / ...
 -- =====================================================
 
 -- ===== 公共字段约定 =====

@@ -26,11 +26,16 @@ Cloud-Study-System/
 │   ├── gac-lms-common/       # 公共组件：异常、响应包装、工具类
 │   ├── gac-lms-infrastructure/# 基础设施：MySQL、Redis、MinIO、安全
 │   ├── gac-lms-ai/           # Spring AI 适配层（评卷 / 错题解析 / 抽题）
-│   ├── gac-lms-module-evaluation/    # 3.3.6  评卷模块      (方雨菲)
-│   ├── gac-lms-module-grade/         # 3.3.7  成绩管理      (方雨菲)
-│   ├── gac-lms-module-exam-taking/   # 3.3.8  在线作答      (方雨菲)
-│   ├── gac-lms-module-self-test/     # 3.3.9  个人测评      (方雨菲)
-│   └── gac-lms-module-knowledge/     # 3.3.10 知识管理      (方雨菲)
+│   ├── gac-lms-module-account/      # 3.3.1  账号管理      (王茗瑾)
+│   ├── gac-lms-module-person/       # 3.3.2  人员信息管理  (王茗瑾)
+│   ├── gac-lms-module-question/     # 3.3.3  题目管理      (王茗瑾)
+│   ├── gac-lms-module-paper/        # 3.3.4  试卷管理      (王茗瑾)
+│   ├── gac-lms-module-exam/         # 3.3.5  考试管理      (王茗瑾)
+│   ├── gac-lms-module-evaluation/   # 3.3.6  评卷模块      (方雨菲)
+│   ├── gac-lms-module-grade/        # 3.3.7  成绩管理      (方雨菲)
+│   ├── gac-lms-module-exam-taking/  # 3.3.8  在线作答      (方雨菲)
+│   ├── gac-lms-module-self-test/    # 3.3.9  个人测评      (方雨菲)
+│   └── gac-lms-module-knowledge/    # 3.3.10 知识管理      (方雨菲)
 │
 ├── frontend/                 # Vue 3 + Vite + TS 前端
 │   ├── src/

@@ -1,0 +1,29 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project xmlns="http://maven.apache.org/POM/4.0.0"
+         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 https://maven.apache.org/xsd/maven-4.0.0.xsd">
+    <modelVersion>4.0.0</modelVersion>
+
+    <parent>
+        <groupId>com.gac.lms</groupId>
+        <artifactId>gac-lms-backend</artifactId>
+        <version>1.0.0-SNAPSHOT</version>
+    </parent>
+
+    <artifactId>gac-lms-module-exam</artifactId>
+    <name>gac-lms-module-exam</name>
+    <description>3.3.5 考试管理：考试 CRUD、交卷规则、参考范围、考试周期</description>
+
+    <dependencies>
+        <dependency>
+            <groupId>com.gac.lms</groupId>
+            <artifactId>gac-lms-common</artifactId>
+            <version>${project.version}</version>
+        </dependency>
+        <dependency>
+            <groupId>com.gac.lms</groupId>
+            <artifactId>gac-lms-infrastructure</artifactId>
+            <version>${project.version}</version>
+        </dependency>
+    </dependencies>
+</project>

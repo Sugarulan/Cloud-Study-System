@@ -33,6 +33,13 @@
         <module>gac-lms-common</module>
         <module>gac-lms-infrastructure</module>
         <module>gac-lms-ai</module>
+        <!-- 王茗瑾负责的业务模块 -->
+        <module>gac-lms-module-account</module>
+        <module>gac-lms-module-person</module>
+        <module>gac-lms-module-question</module>
+        <module>gac-lms-module-paper</module>
+        <module>gac-lms-module-exam</module>
+        <!-- 方雨菲负责的业务模块 -->
         <module>gac-lms-module-evaluation</module>
         <module>gac-lms-module-grade</module>
         <module>gac-lms-module-exam-taking</module>

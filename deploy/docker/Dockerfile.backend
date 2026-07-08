@@ -1,0 +1,48 @@
+# =====================================================
+# GAC-LMS Backend Dockerfile（W1 多阶段构建）
+# =====================================================
+
+# 阶段 1：构建
+FROM maven:3.9-eclipse-temurin-17 AS builder
+WORKDIR /build
+
+# 先拷贝 POM 利用 Docker 缓存
+COPY backend/pom.xml ./pom.xml
+COPY backend/gac-lms-dependencies/pom.xml ./gac-lms-dependencies/
+COPY backend/gac-lms-common/pom.xml ./gac-lms-common/
+COPY backend/gac-lms-infrastructure/pom.xml ./gac-lms-infrastructure/
+COPY backend/gac-lms-ai/pom.xml ./gac-lms-ai/
+COPY backend/gac-lms-module-evaluation/pom.xml ./gac-lms-module-evaluation/
+COPY backend/gac-lms-module-grade/pom.xml ./gac-lms-module-grade/
+COPY backend/gac-lms-module-exam-taking/pom.xml ./gac-lms-module-exam-taking/
+COPY backend/gac-lms-module-self-test/pom.xml ./gac-lms-module-self-test/
+COPY backend/gac-lms-module-knowledge/pom.xml ./gac-lms-module-knowledge/
+COPY backend/gac-lms-app/pom.xml ./gac-lms-app/
+
+RUN mvn -B -q -DskipTests dependency:go-offline || true
+
+# 再拷贝源码
+COPY backend/ ./
+
+# 打包（跳过测试）
+RUN mvn -B -DskipTests package
+
+# 阶段 2：运行时
+FROM eclipse-temurin:17-jre
+WORKDIR /app
+
+# 时区
+ENV TZ=Asia/Shanghai
+RUN ln -snf /usr/share/zoneinfo/$TZ /etc/localtime && echo $TZ > /etc/timezone
+
+# 拷贝可执行 jar
+COPY --from=builder /build/gac-lms-app/target/*.jar app.jar
+
+EXPOSE 8080
+
+# JVM 参数：容器感知 + G1GC
+ENTRYPOINT ["java", \
+    "-XX:+UseContainerSupport", \
+    "-XX:MaxRAMPercentage=75", \
+    "-XX:+UseG1GC", \
+    "-jar", "/app/app.jar"]

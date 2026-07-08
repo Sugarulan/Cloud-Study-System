@@ -1,0 +1,28 @@
+// =========================================
+// 全局样式
+// =========================================
+
+:root {
+  --gac-primary: #1890ff;
+  --gac-success: #52c41a;
+  --gac-warning: #faad14;
+  --gac-danger: #ff4d4f;
+  --gac-text: #333;
+  --gac-text-secondary: #666;
+  --gac-border: #e8e8e8;
+  --gac-bg: #f5f7fa;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+.page-container {
+  padding: 16px;
+}
+
+.card-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}

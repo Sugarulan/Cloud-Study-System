@@ -1,0 +1,114 @@
+server:
+  port: 8080
+  servlet:
+    context-path: /
+
+spring:
+  application:
+    name: gac-lms
+  profiles:
+    active: dev
+  jackson:
+    date-format: yyyy-MM-dd HH:mm:ss
+    time-zone: GMT+8
+    default-property-inclusion: non_null
+
+  # ===== 数据源（dev 默认 H2 内存库，开箱即用） =====
+  datasource:
+    url: jdbc:h2:mem:gac_lms;MODE=MySQL;DB_CLOSE_DELAY=-1
+    driver-class-name: org.h2.Driver
+    username: sa
+    password:
+
+  # H2 Web 控制台：http://localhost:8080/h2-console
+  h2:
+    console:
+      enabled: true
+      path: /h2-console
+
+  # ===== Redis（dev 默认嵌入式，生产切换 standalone/cluster） =====
+  data:
+    redis:
+      host: ${REDIS_HOST:localhost}
+      port: ${REDIS_PORT:6379}
+      password: ${REDIS_PASSWORD:}
+      database: 0
+      timeout: 3000ms
+
+  # ===== Servlet 上传 =====
+  servlet:
+    multipart:
+      max-file-size: 100MB
+      max-request-size: 100MB
+
+# ===== MyBatis-Plus =====
+mybatis-plus:
+  mapper-locations: classpath*:mapper/**/*.xml
+  type-aliases-package: com.gac.lms.**.entity
+  configuration:
+    map-underscore-to-camel-case: true
+    log-impl: org.apache.ibatis.logging.stdout.StdOutImpl
+  global-config:
+    db-config:
+      logic-delete-field: deleted
+      logic-delete-value: 1
+      logic-not-delete-value: 0
+
+# ===== MinIO =====
+gac:
+  lms:
+    minio:
+      endpoint: ${MINIO_ENDPOINT:http://localhost:9000}
+      access-key: ${MINIO_ACCESS_KEY:minioadmin}
+      secret-key: ${MINIO_SECRET_KEY:minioadmin}
+      bucket: ${MINIO_BUCKET:gac-lms}
+    # ===== AI 配置（dev 默认 mock） =====
+    # 生产环境切换为 openai-compatible 并配置 spring.ai.openai.*
+    ai:
+      provider: ${AI_PROVIDER:mock}
+
+# ===== Spring AI（OpenAI 兼容协议） =====
+# 当 gac.lms.ai.provider=openai-compatible 时生效
+spring:
+  ai:
+    openai:
+      base-url: ${OPENAI_BASE_URL:http://internal-llm.gac.local/v1}
+      api-key: ${OPENAI_API_KEY:sk-placeholder}
+      chat:
+        options:
+          model: ${OPENAI_MODEL:qwen-plus}
+          temperature: 0.3
+
+# ===== Resilience4j =====
+resilience4j:
+  circuitbreaker:
+    instances:
+      llmService:
+        sliding-window-type: COUNT_BASED
+        sliding-window-size: 10
+        minimum-number-of-calls: 5
+        failure-rate-threshold: 50
+        wait-duration-in-open-state: 30s
+        permitted-number-of-calls-in-half-open-state: 3
+        automatic-transition-from-open-to-half-open-enabled: true
+
+# ===== SpringDoc / Knife4j =====
+springdoc:
+  api-docs:
+    enabled: true
+    path: /v3/api-docs
+  swagger-ui:
+    enabled: true
+    path: /swagger-ui.html
+
+knife4j:
+  enable: true
+  setting:
+    language: zh_cn
+
+# ===== 日志 =====
+logging:
+  level:
+    root: INFO
+    com.gac.lms: DEBUG
+    org.springframework.ai: INFO

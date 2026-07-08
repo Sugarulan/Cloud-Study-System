@@ -1,0 +1,84 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project xmlns="http://maven.apache.org/POM/4.0.0"
+         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 https://maven.apache.org/xsd/maven-4.0.0.xsd">
+    <modelVersion>4.0.0</modelVersion>
+
+    <parent>
+        <groupId>com.gac.lms</groupId>
+        <artifactId>gac-lms-backend</artifactId>
+        <version>1.0.0-SNAPSHOT</version>
+    </parent>
+
+    <artifactId>gac-lms-app</artifactId>
+    <name>gac-lms-app</name>
+    <description>GAC-LMS 启动模块：聚合所有业务模块，Spring Boot 入口</description>
+
+    <dependencies>
+        <!-- 基础设施：必须包含，提供所有 @Configuration -->
+        <dependency>
+            <groupId>com.gac.lms</groupId>
+            <artifactId>gac-lms-infrastructure</artifactId>
+            <version>${project.version}</version>
+        </dependency>
+
+        <!-- AI 适配层 -->
+        <dependency>
+            <groupId>com.gac.lms</groupId>
+            <artifactId>gac-lms-ai</artifactId>
+            <version>${project.version}</version>
+        </dependency>
+
+        <!-- 方雨菲负责的 5 个业务模块 -->
+        <dependency>
+            <groupId>com.gac.lms</groupId>
+            <artifactId>gac-lms-module-evaluation</artifactId>
+            <version>${project.version}</version>
+        </dependency>
+        <dependency>
+            <groupId>com.gac.lms</groupId>
+            <artifactId>gac-lms-module-grade</artifactId>
+            <version>${project.version}</version>
+        </dependency>
+        <dependency>
+            <groupId>com.gac.lms</groupId>
+            <artifactId>gac-lms-module-exam-taking</artifactId>
+            <version>${project.version}</version>
+        </dependency>
+        <dependency>
+            <groupId>com.gac.lms</groupId>
+            <artifactId>gac-lms-module-self-test</artifactId>
+            <version>${project.version}</version>
+        </dependency>
+        <dependency>
+            <groupId>com.gac.lms</groupId>
+            <artifactId>gac-lms-module-knowledge</artifactId>
+            <version>${project.version}</version>
+        </dependency>
+
+        <!-- Spring Boot Web（必须由启动模块提供） -->
+        <dependency>
+            <groupId>org.springframework.boot</groupId>
+            <artifactId>spring-boot-starter-web</artifactId>
+        </dependency>
+
+        <!-- H2 内存库（dev 默认；生产切换 MySQL） -->
+        <dependency>
+            <groupId>com.h2database</groupId>
+            <artifactId>h2</artifactId>
+            <scope>runtime</scope>
+        </dependency>
+    </dependencies>
+
+    <build>
+        <plugins>
+            <plugin>
+                <groupId>org.springframework.boot</groupId>
+                <artifactId>spring-boot-maven-plugin</artifactId>
+                <configuration>
+                    <mainClass>com.gac.lms.GacLmsApplication</mainClass>
+                </configuration>
+            </plugin>
+        </plugins>
+    </build>
+</project>

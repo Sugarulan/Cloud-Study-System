@@ -92,6 +92,16 @@ gac:
         api-key: ${OPENAI_API_KEY:sk-placeholder}
         model: ${OPENAI_MODEL:qwen-plus}
         temperature: 0.3
+    # ===== JWT 配置（登录态 Token）=====
+    jwt:
+      # 32 字节以上随机字符串，生产请通过环境变量覆盖
+      secret: ${JWT_SECRET:please-change-me-in-prod-this-is-a-32bytes-min-secret-key}
+      # Token 有效期（分钟），默认 12 小时
+      expire-minutes: ${JWT_EXPIRE_MINUTES:720}
+      # HTTP Header 名
+      header: Authorization
+      # Token 前缀
+      prefix: "Bearer "
 
 # ===== Resilience4j=====
 resilience4j:

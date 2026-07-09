@@ -8,6 +8,7 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.validation.BindException;
 import org.springframework.web.bind.MethodArgumentNotValidException;
+import org.springframework.web.bind.MissingRequestHeaderException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
 
@@ -47,6 +48,16 @@ public class GlobalExceptionHandler {
                 .map(e -> e.getField() + ": " + e.getDefaultMessage())
                 .orElse(ErrorCode.BAD_REQUEST.getMessage());
         return ResponseEntity.ok(Result.fail(ErrorCode.BAD_REQUEST.getCode(), msg));
+    }
+
+    /**
+     * 缺少必填请求头（如 {@code X-User-Id}） → 401 业务码。
+     */
+    @ExceptionHandler(MissingRequestHeaderException.class)
+    public ResponseEntity<Result<Void>> handleMissingHeader(MissingRequestHeaderException ex) {
+        log.warn("[MissingRequestHeaderException] header={}", ex.getHeaderName());
+        return ResponseEntity.ok(Result.fail(ErrorCode.UNAUTHORIZED.getCode(),
+                "缺少必填请求头: " + ex.getHeaderName()));
     }
 
     /** 兜底异常 */

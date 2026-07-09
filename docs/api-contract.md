@@ -350,7 +350,93 @@ Content-Type: application/json
 
 ---
 
-## 5. 待王茗瑾对齐的依赖接口
+## 5. 系统集成模块（3.3.11，方雨菲负责）
+
+> 横跨基础与扩展两侧，本节列出**方雨菲负责部分**（AI 集成、站内信、Webhook）。
+> 邮件发送底层由 SMTP 实现，考试提醒、成绩发布由方雨菲编写，调用方为王茗瑾的账号/考试模块。
+
+### 5.1 邮件通知（W4 实现）
+
+```
+POST /api/v1/integration/email/send              # 通用邮件发送
+POST /api/v1/integration/email/template          # 模板邮件（考试提醒/成绩发布）
+POST /api/v1/integration/email/batch             # 批量发送
+GET  /api/v1/integration/email/logs              # 发送日志查询
+```
+
+#### 模板邮件（考试提醒）
+
+```http
+POST /api/v1/integration/email/template
+Content-Type: application/json
+
+{
+  "templateCode": "EXAM_REMIND",
+  "to": ["zhangsan@gac.local"],
+  "params": {
+    "examName": "Java 高级开发考试",
+    "startTime": "2026-07-15 14:00",
+    "duration": 60
+  }
+}
+```
+
+### 5.2 站内信（W4 实现）
+
+```
+POST /api/v1/integration/message/push            # 推送单条站内信
+POST /api/v1/integration/message/batch           # 批量推送
+GET  /api/v1/integration/message/unread-count    # 当前用户未读数
+GET  /api/v1/integration/message/list            # 收件箱列表
+POST /api/v1/integration/message/{id}/read       # 标记已读
+```
+
+#### 推送站内信
+
+```http
+POST /api/v1/integration/message/push
+Content-Type: application/json
+
+{
+  "userId": 1001,
+  "type": "EXAM_REMIND",
+  "title": "【考试提醒】您有一场待考",
+  "content": "《Java 高级开发》考试将于明日 14:00 开始，请准时参加。"
+}
+```
+
+### 5.3 Webhook 推送（W5 实现）
+
+```
+GET    /api/v1/integration/webhooks              # Webhook 配置列表
+POST   /api/v1/integration/webhooks              # 新增 Webhook
+PUT    /api/v1/integration/webhooks/{id}         # 更新配置
+DELETE /api/v1/integration/webhooks/{id}         # 删除配置
+POST   /api/v1/integration/webhooks/{id}/test    # 测试推送
+GET    /api/v1/integration/webhooks/{id}/logs    # 推送历史
+```
+
+### 5.4 系统集成事件总线（W5 实现）
+
+业务模块（考试发布、成绩发布、错题入库）通过 Spring `ApplicationEventPublisher`
+发布事件，由 `3.3.11` 监听并触发邮件 / 站内信 / Webhook 推送：
+
+```java
+// 业务模块发布
+applicationEventPublisher.publishEvent(new ExamPublishedEvent(examId, examName));
+
+// 3.3.11 监听
+@EventListener
+public void onExamPublished(ExamPublishedEvent event) {
+    // 1. 给所有参考人员发站内信
+    // 2. 触发邮件模板（如果开启了邮件通知）
+    // 3. 推送 Webhook
+}
+```
+
+---
+
+## 6. 待王茗瑾对齐的依赖接口
 
 | 你需要调用 | 接口 | 用途 |
 |-----------|------|------|
@@ -358,6 +444,5 @@ Content-Type: application/json
 | 考试数据 | `GET /api/v1/exams/{id}` | 校验考试周期 / 参考范围 |
 | 题目数据 | `GET /api/v1/questions/{id}` | 在线作答加载题目 |
 | 用户身份 | `GET /api/v1/auth/me` | 当前用户 |
-| 邮件通知 | `POST /api/v1/integrations/email` | 考试提醒 |
 
 > ⚠️ 以上接口**字段命名和路径**需要在 W1 末由王茗瑾最终确认，W2 冻结。

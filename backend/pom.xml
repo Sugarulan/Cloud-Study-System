@@ -45,6 +45,7 @@
         <module>gac-lms-module-exam-taking</module>
         <module>gac-lms-module-self-test</module>
         <module>gac-lms-module-knowledge</module>
+        <module>gac-lms-module-integration</module>
         <module>gac-lms-app</module>
     </modules>
 

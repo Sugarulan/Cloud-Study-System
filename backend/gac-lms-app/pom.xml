@@ -82,6 +82,11 @@
             <artifactId>gac-lms-module-knowledge</artifactId>
             <version>${project.version}</version>
         </dependency>
+        <dependency>
+            <groupId>com.gac.lms</groupId>
+            <artifactId>gac-lms-module-integration</artifactId>
+            <version>${project.version}</version>
+        </dependency>
 
         <!-- Spring Boot Web（必须由启动模块提供） -->
         <dependency>

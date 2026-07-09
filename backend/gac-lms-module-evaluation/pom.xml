@@ -30,11 +30,5 @@
             <artifactId>gac-lms-ai</artifactId>
             <version>${project.version}</version>
         </dependency>
-
-        <!-- Spring Modulith：@ApplicationModule / @PackageInfo 模块边界声明 -->
-        <dependency>
-            <groupId>org.springframework.modulith</groupId>
-            <artifactId>spring-modulith-core</artifactId>
-        </dependency>
     </dependencies>
 </project>

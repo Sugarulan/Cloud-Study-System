@@ -55,15 +55,427 @@ GET /api/v1/xxx?pageNum=1&pageSize=10&keyword=xxx
 
 ---
 
-## 2. 王茗瑾负责的模块（参考，完整契约见王茗瑾文档）
+## 2. 王茗瑾负责的模块
 
-| 模块 | 关键接口（占位） |
-|------|----------------|
-| 账号管理 | `POST /api/v1/auth/login`、`GET /api/v1/accounts` |
-| 人员管理 | `GET /api/v1/persons`、`POST /api/v1/persons/import` |
-| 题目管理 | `GET /api/v1/questions`、`POST /api/v1/questions` |
-| 试卷管理 | `POST /api/v1/papers`、`POST /api/v1/papers/{id}/publish` |
-| 考试管理 | `POST /api/v1/exams`、`POST /api/v1/exams/{id}/publish` |
+> **状态**：W2 已实现，已冻结。后续字段变更需 PR + 双方 review。
+
+### 2.1 账号管理（3.3.1）
+
+#### 2.1.1 认证接口 `/api/v1/auth/**`（放行，无需 JWT）
+
+##### POST `/api/v1/auth/login` — 登录
+
+**请求体**：
+```json
+{
+  "username": "admin",
+  "password": "admin123"
+}
+```
+
+**响应**（200 / code=0）：
+```json
+{
+  "code": 0,
+  "message": "success",
+  "data": {
+    "token": "eyJhbGciOiJIUzM4NCJ9...",
+    "expireMinutes": 720,
+    "userId": 1,
+    "username": "admin",
+    "displayName": "admin",
+    "roles": ["ADMIN"],
+    "permissions": ["account", "account:list", "account:create", ...]
+  }
+}
+```
+
+| 错误码 | 含义 |
+|--------|------|
+| 10002 | 用户名或密码错误 |
+| 20003 | 账号已停用（status=0） |
+
+##### GET `/api/v1/auth/me` — 当前用户
+
+**请求头**：`Authorization: Bearer {token}`
+
+**响应**（200 / code=0）：
+```json
+{
+  "code": 0,
+  "data": {
+    "userId": 1,
+    "username": "admin",
+    "displayName": "admin",
+    "roles": ["ADMIN"],
+    "permissions": [...]
+  }
+}
+```
+
+| 错误码 | 含义 |
+|--------|------|
+| 10002 | 未登录或 token 已过期 |
+
+##### POST `/api/v1/auth/logout` — 登出
+
+**响应**：200 / code=0（前端清 token 即可，服务端可选黑名单）
+
+---
+
+#### 2.1.2 账号 CRUD `/api/v1/accounts/**`（需 JWT）
+
+##### GET `/api/v1/accounts` — 分页
+
+**Query 参数**：
+| 参数 | 类型 | 说明 |
+|------|------|------|
+| pageNum | long | 页码，默认 1 |
+| pageSize | long | 每页大小，默认 10 |
+| keyword | string | 模糊匹配 username/email/phone |
+| status | int | 0=禁用，1=启用 |
+
+**响应**：
+```json
+{
+  "code": 0,
+  "data": {
+    "total": 4,
+    "pageNum": 1,
+    "pageSize": 10,
+    "records": [
+      {
+        "id": 1,
+        "username": "admin",
+        "email": "admin@gac-lms.local",
+        "phone": "13800000001",
+        "status": 1,
+        "lastLoginAt": "2026-07-09 12:00:00",
+        "createTime": "2026-07-09 12:00:00",
+        "roles": [
+          { "id": 1, "code": "ADMIN", "name": "超级管理员" }
+        ]
+      }
+    ]
+  }
+}
+```
+
+##### GET `/api/v1/accounts/{id}` — 详情
+
+**响应**：同上 records 单条元素。
+
+##### POST `/api/v1/accounts` — 创建
+
+**请求体**：
+```json
+{
+  "username": "newuser01",
+  "password": "Initial@1234",
+  "email": "newuser01@gac-lms.local",
+  "phone": "13900000000",
+  "roleIds": [3]
+}
+```
+
+| 错误码 | 含义 |
+|--------|------|
+| 20002 | 登录名已存在 |
+
+##### PUT `/api/v1/accounts/{id}` — 更新
+
+**请求体**（只改这些字段，username/password 不可改）：
+```json
+{
+  "email": "newemail@gac-lms.local",
+  "phone": "13900000000",
+  "status": 1
+}
+```
+
+##### POST `/api/v1/accounts/{id}/enable` — 启用
+
+##### POST `/api/v1/accounts/{id}/disable` — 停用
+
+##### POST `/api/v1/accounts/{id}/reset-password` — 管理员重置
+
+**请求体**：`{ "newPassword": "Reset@1234" }`
+
+##### POST `/api/v1/accounts/{id}/change-password` — 自己改密
+
+**请求体**：
+```json
+{
+  "oldPassword": "Old@1234",
+  "newPassword": "New@1234"
+}
+```
+
+| 错误码 | 含义 |
+|--------|------|
+| 10003 | FORBIDDEN - 只能修改自己的密码 |
+| 20003 | 旧密码不正确 |
+
+##### GET `/api/v1/accounts/{id}/roles` — 查账号角色
+
+**响应**：
+```json
+{
+  "code": 0,
+  "data": [
+    { "id": 2, "code": "TEACHER", "name": "教师" },
+    { "id": 3, "code": "STUDENT", "name": "学员" }
+  ]
+}
+```
+
+##### POST `/api/v1/accounts/{id}/roles` — 分配角色（替换式）
+
+**请求体**：`{ "roleIds": [2, 3] }`
+
+**响应**：`{ "code": 0, "data": 2 }`（data = 成功分配的角色数）
+
+| 错误码 | 含义 |
+|--------|------|
+| 20001 | 账号不存在 |
+| 20001 | 部分角色 ID 不存在 |
+
+##### GET `/api/v1/accounts/health` — 健康检查（无需 JWT）
+
+---
+
+### 2.2 角色权限管理（3.3.1）
+
+#### `/api/v1/roles/**`（需 JWT）
+
+##### GET `/api/v1/roles/all` — 所有启用角色（下拉用）
+
+**Query**：`?category=` 可选过滤（不传查全部）
+
+**响应**：
+```json
+{
+  "code": 0,
+  "data": [
+    { "id": 1, "code": "ADMIN", "name": "超级管理员", "description": "拥有系统全部权限", "sort": 1, "status": 1, "permissionIds": [1, 2, 3, ...] }
+  ]
+}
+```
+
+##### GET `/api/v1/roles` — 分页
+
+**Query**：`pageNum, pageSize, keyword`
+
+##### GET `/api/v1/roles/{id}` — 详情
+
+##### POST `/api/v1/roles` — 创建
+
+**请求体**：
+```json
+{
+  "code": "HR",
+  "name": "HR经理",
+  "description": "人力资源管理",
+  "sort": 10
+}
+```
+
+| 错误码 | 含义 |
+|--------|------|
+| 20002 | 角色编码已存在 |
+
+##### PUT `/api/v1/roles/{id}` — 更新（不可改 code）
+
+##### DELETE `/api/v1/roles/{id}` — 删除
+
+| 错误码 | 含义 |
+|--------|------|
+| 20004 | 该角色被 N 个账号引用，无法删除 |
+
+##### POST `/api/v1/roles/{id}/permissions` — 分配权限（替换式）
+
+**请求体**：`{ "permissionIds": [1, 2, 3] }`
+
+---
+
+### 2.3 题目管理（3.3.3）
+
+#### 2.3.1 题目 CRUD `/api/v1/questions/**`（需 JWT）
+
+##### GET `/api/v1/questions` — 分页
+
+**Query 参数**：
+| 参数 | 类型 | 说明 |
+|------|------|------|
+| pageNum | long | 页码，默认 1 |
+| pageSize | long | 每页大小，默认 10 |
+| type | string | SINGLE/MULTI/JUDGE/ESSAY/FILL |
+| difficulty | int | 1-5 |
+| tagId | long | 按标签过滤（W3 优化 SQL JOIN） |
+| keyword | string | 模糊匹配 stem |
+| status | int | 0=草稿，1=已发布 |
+
+##### GET `/api/v1/questions/{id}` — 详情
+
+**响应**：
+```json
+{
+  "code": 0,
+  "data": {
+    "id": 1,
+    "type": "SINGLE",
+    "stem": "Java 中，用于保证多个线程间共享变量可见性的关键字是？",
+    "analysis": "volatile 强制线程从主内存读写变量的最新值。",
+    "difficulty": 2,
+    "defaultScore": 5.00,
+    "categoryId": null,
+    "status": 1,
+    "answer": "C",                          // 字符串 / 数组 / 布尔（按 type 解释）
+    "options": [
+      { "id": 1, "optKey": "A", "optValue": "synchronized", "isCorrect": false, "sort": 1 },
+      { "id": 3, "optKey": "C", "optValue": "volatile",    "isCorrect": true,  "sort": 3 }
+    ],
+    "tagIds": [1, 4],
+    "createTime": "2026-07-09 12:00:00"
+  }
+}
+```
+
+> **answer 字段格式**（由 `type` 决定，**前端必须按 type 解释**）：
+>
+> | type | answer 类型 | 示例 |
+> |------|------------|------|
+> | SINGLE | string | `"C"` |
+> | MULTI | string[] | `["A", "B"]` |
+> | JUDGE | boolean | `true` |
+> | ESSAY | string 或 string[] | `"参考答案..."` |
+> | FILL | string[] | `["答案1", "答案2"]` |
+
+##### POST `/api/v1/questions` — 创建
+
+**请求体**（单选题示例）：
+```json
+{
+  "type": "SINGLE",
+  "stem": "Java 中用于保证线程间可见性的关键字是？",
+  "analysis": "volatile 强制线程从主内存读写变量的最新值",
+  "difficulty": 2,
+  "defaultScore": 5.00,
+  "answer": "C",
+  "options": [
+    { "optKey": "A", "optValue": "synchronized", "isCorrect": false, "sort": 1 },
+    { "optKey": "B", "optValue": "final",       "isCorrect": false, "sort": 2 },
+    { "optKey": "C", "optValue": "volatile",    "isCorrect": true,  "sort": 3 },
+    { "optKey": "D", "optValue": "static",      "isCorrect": false, "sort": 4 }
+  ],
+  "tagIds": [1, 4]
+}
+```
+
+| 错误码 | 含义 |
+|--------|------|
+| 20003 | 答案格式不对（如 SINGLE 答案非 string，JUDGE 答案非 boolean） |
+| 20003 | SINGLE/MULTI 至少 2 选项 / 至少 1 正确答案 / SINGLE 仅 1 个正确答案 |
+
+##### PUT `/api/v1/questions/{id}` — 更新
+
+**约束**：
+- **type 不可改**（改动会破坏已发布数据的关联）
+- options / tagIds 用替换式（传空数组 = 清空）
+
+##### DELETE `/api/v1/questions/{id}` — 软删
+
+| 错误码 | 含义 |
+|--------|------|
+| 20004 | 已发布的题目不能删除，请先下架 |
+
+##### POST `/api/v1/questions/batch-delete` — 批量软删
+
+**请求体**：`{ "ids": [6, 7, 8] }`
+
+**响应**：成功 + 失败 ID 在错误信息里（如"成功 2 条，失败 1 条。失败 ID：[9999]"）
+
+##### POST `/api/v1/questions/{id}/publish` — 发布（status 0→1）
+
+| 错误码 | 含义 |
+|--------|------|
+| 20001 | 题目不存在 |
+| 20004 | 题目已发布，无需重复操作 |
+| 20003 | 题目无答案，不能发布 |
+
+##### POST `/api/v1/questions/{id}/unpublish` — 取消发布（status 1→0）
+
+| 错误码 | 含义 |
+|--------|------|
+| 20001 | 题目不存在 |
+| 20004 | 题目未发布，无需取消 |
+| 20004 | （W4）被试卷引用，无法取消 |
+
+##### POST `/api/v1/questions/batch-publish` — 批量发布
+
+**Query**：`?ids=1,2,3`
+
+> 部分失败静默跳过（单条失败不影响其他），整体仍返回 code=0。
+
+##### GET `/api/v1/questions/health` — 健康检查（无需 JWT）
+
+---
+
+#### 2.3.2 标签管理 `/api/v1/tags/**`（需 JWT）
+
+##### GET `/api/v1/tags` — 列表
+
+**Query**：`?category=题目`（可选，按 category 过滤，默认 `题目`）
+
+**响应**：
+```json
+{
+  "code": 0,
+  "data": [
+    { "id": 1, "name": "Java", "category": "题目", "useCount": 5 }
+  ]
+}
+```
+
+##### POST `/api/v1/tags?name=Redis&category=题目` — 创建
+
+##### PUT `/api/v1/tags/{id}` — 更新
+
+##### DELETE `/api/v1/tags/{id}` — 删除
+
+| 错误码 | 含义 |
+|--------|------|
+| 20004 | 该标签被 N 个题目引用，无法删除 |
+
+---
+
+### 2.4 人员管理（3.3.2）—— 待开发
+
+> W2.3 计划开发。接口清单见 [王茗瑾开发指南 §2.2](../王茗瑾开发指南.md#22-w22--5-个模块统一模板day-3-7)。
+
+### 2.5 试卷管理（3.3.4）—— 待开发
+
+> W2.3 计划开发。包含自动抽题组卷算法（最复杂的接口）。
+
+### 2.6 考试管理（3.3.5）—— 待开发
+
+> W2.3 计划开发。含状态机 + 定时任务 + 参考范围。
+
+---
+
+### 2.7 通用约定
+
+| 项 | 约定 |
+|----|------|
+| **认证** | 除 `/api/v1/auth/**`、`/actuator/health`、Swagger UI、`/api/v1/*/health` 外，所有接口需 `Authorization: Bearer {token}` |
+| **JWT 有效期** | 默认 12 小时（720 分钟），可通过 `JWT_EXPIRE_MINUTES` 环境变量调整 |
+| **JWT Claims** | `sub`(userId) / `username` / `roles` / `perms` |
+| **密码策略** | BCrypt 强度 10，长度 ≥ 8，含字母+数字 |
+| **审计字段** | 所有 Entity 由 `MyMetaObjectHandler` 自动填充 `createBy/createTime/updateBy/updateTime` |
+| **逻辑删除** | `@TableLogic` 字段 `deleted`（0=未删，1=已删），查询自动过滤 |
+| **乐观锁** | 主表用 `@Version` 字段，中间表不用 |
+| **分页响应** | `{ total, pageNum, pageSize, records }` |
+| **错误码** | 0=成功 / 1xxxx=通用 / 2xxxx=业务 / 3xxxx=第三方 |
 
 ---
 

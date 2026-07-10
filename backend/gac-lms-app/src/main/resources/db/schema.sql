@@ -459,6 +459,7 @@ CREATE TABLE `wrong_question` (
   `id`            bigint       NOT NULL,
   `user_id`       bigint       NOT NULL COMMENT '学员 ID',
   `grade_id`      bigint       NOT NULL,
+  `exam_id`       bigint       DEFAULT NULL COMMENT '考试 ID��冗余字段，便于查询）',
   `question_id`   bigint       NOT NULL,
   `user_answer`   text,
   `correct_answer`text,

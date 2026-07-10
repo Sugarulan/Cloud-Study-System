@@ -1,4 +1,4 @@
-﻿package com.gac.lms.module.evaluation.service.impl;
+package com.gac.lms.module.evaluation.service.impl;
 
 import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
 import com.gac.lms.ai.service.LLMService;

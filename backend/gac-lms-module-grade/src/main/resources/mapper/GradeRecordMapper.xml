@@ -1,0 +1,53 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "https://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.gac.lms.module.grade.mapper.GradeRecordMapper">
+
+    <!-- 成绩统计：聚合查询 -->
+    <select id="statistics" resultType="com.gac.lms.module.grade.vo.GradeStatisticsVO">
+        SELECT
+            #{examId}                                                                AS examId,
+            COUNT(*)                                                                  AS totalCount,
+            SUM(CASE WHEN status >= 1 THEN 1 ELSE 0 END)                              AS submittedCount,
+            SUM(CASE WHEN status >= 2 THEN 1 ELSE 0 END)                              AS gradedCount,
+            SUM(CASE WHEN status = 4  THEN 1 ELSE 0 END)                              AS publishedCount,
+            ROUND(AVG(total_score), 2)                                                AS averageScore,
+            MAX(total_score)                                                          AS maxScore,
+            MIN(CASE WHEN total_score IS NOT NULL THEN total_score END)               AS minScore,
+            SUM(CASE WHEN is_passed = 1 THEN 1 ELSE 0 END)                            AS passedCount,
+            ROUND(
+                CASE WHEN COUNT(*) = 0 THEN 0
+                     ELSE SUM(CASE WHEN is_passed = 1 THEN 1 ELSE 0 END) * 1.0 / COUNT(*)
+                END, 4)                                                                AS passRate
+        FROM grade_record
+        WHERE deleted = 0
+          AND exam_id = #{examId}
+    </select>
+
+    <!-- 分数段分布 -->
+    <select id="distribution" resultType="com.gac.lms.module.grade.vo.GradeStatisticsVO$ScoreBucket">
+        SELECT
+            bucket.range AS range,
+            COUNT(1)     AS count,
+            ROUND(COUNT(1) * 1.0 / (SELECT COUNT(*) FROM grade_record
+                                   WHERE deleted = 0 AND exam_id = #{examId}
+                                     AND total_score IS NOT NULL), 4) AS ratio
+        FROM (
+            SELECT
+                CASE
+                    WHEN total_score >= 90 THEN '90-100'
+                    WHEN total_score >= 80 THEN '80-89'
+                    WHEN total_score >= 70 THEN '70-79'
+                    WHEN total_score >= 60 THEN '60-69'
+                    WHEN total_score >= 0  THEN '0-59'
+                    ELSE 'N/A'
+                END AS range
+            FROM grade_record
+            WHERE deleted = 0
+              AND exam_id = #{examId}
+              AND total_score IS NOT NULL
+        ) bucket
+        GROUP BY bucket.range
+        ORDER BY bucket.range DESC
+    </select>
+
+</mapper>

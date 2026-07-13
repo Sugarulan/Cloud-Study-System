@@ -2,7 +2,7 @@
 
 > 本文档为 W1 末冻结的接口契约初稿，**冻结后字段不再随意变更**。
 > 所有模块接口统一前缀 `/api/v1`，统一响应格式见 §1。
-> 王茗瑾负责的 5 个模块接口见 §2，方雨菲负责的 5 个模块接口见 §3，AI 模块接口见 §4。
+> 方雨菲负责的 5 个模块接口见 §3。
 
 ---
 
@@ -55,119 +55,479 @@ GET /api/v1/xxx?pageNum=1&pageSize=10&keyword=xxx
 
 ---
 
-## 2. 王茗瑾���责的 5 个模块
+## 2. 王茗瑾负责的模块
+
+> **状态**：W2 已实现，已冻结。后续字段变更需 PR + 双方 review。
 
 ### 2.1 账号管理（3.3.1）
 
-```
-POST   /api/v1/auth/login                # 登录（返回 JWT）
-POST   /api/v1/auth/logout               # 登出
-GET    /api/v1/accounts                  # 账号列表（分页 + 筛选）
-POST   /api/v1/accounts                  # 创建账号
-GET    /api/v1/accounts/{id}             # 账号详情
-PUT    /api/v1/accounts/{id}             # 更新账号
-DELETE /api/v1/accounts/{id}             # 停用账号
-POST   /api/v1/accounts/{id}/reset-password  # 重置密码
-POST   /api/v1/accounts/{id}/roles       # 分配角色
-GET    /api/v1/roles                     # 角色列表
-POST   /api/v1/roles                     # 创建角色
-```
+#### 2.1.1 认证接口 `/api/v1/auth/**`（放行，无需 JWT）
 
-#### 登录请求
+##### POST `/api/v1/auth/login` — 登录
 
-```http
-POST /api/v1/auth/login
-Content-Type: application/json
-
+**请求体**：
+```json
 {
-  "username": "zhangsan",
-  "password": "EncryptedPwd@123"
+  "username": "admin",
+  "password": "admin123"
 }
 ```
 
-#### 登录响应
-
+**响应**（200 / code=0）：
 ```json
 {
   "code": 0,
+  "message": "success",
   "data": {
-    "token": "eyJhbGciOiJIUzI1NiJ9...",
-    "expiresIn": 7200,
-    "userInfo": {
-      "id": 1001,
-      "username": "zhangsan",
-      "realName": "张三",
-      "roles": ["STUDENT"]
-    }
+    "token": "eyJhbGciOiJIUzM4NCJ9...",
+    "expireMinutes": 720,
+    "userId": 1,
+    "username": "admin",
+    "displayName": "admin",
+    "roles": ["ADMIN"],
+    "permissions": ["account", "account:list", "account:create", ...]
   }
 }
 ```
 
-### 2.2 人员信息管理（3.3.2）
+| 错误码 | 含义 |
+|--------|------|
+| 10002 | 用户名或密码错误 |
+| 20003 | 账号已停用（status=0） |
 
+##### GET `/api/v1/auth/me` — 当前用户
+
+**请求头**：`Authorization: Bearer {token}`
+
+**响应**（200 / code=0）：
+```json
+{
+  "code": 0,
+  "data": {
+    "userId": 1,
+    "username": "admin",
+    "displayName": "admin",
+    "roles": ["ADMIN"],
+    "permissions": [...]
+  }
+}
 ```
-GET    /api/v1/persons                   # 人员列表（按系统/部门筛选）
-POST   /api/v1/persons                   # 创建人员
-GET    /api/v1/persons/{id}              # 人员详情
-PUT    /api/v1/persons/{id}              # 更新人员
-POST   /api/v1/persons/{id}/link-account # 关联账号
-POST   /api/v1/persons/import            # Excel 批量导入
-GET    /api/v1/persons/export            # Excel 导出
+
+| 错误码 | 含义 |
+|--------|------|
+| 10002 | 未登录或 token 已过期 |
+
+##### POST `/api/v1/auth/logout` — 登出
+
+**响应**：200 / code=0（前端清 token 即可，服务端可选黑名单）
+
+---
+
+#### 2.1.2 账号 CRUD `/api/v1/accounts/**`（需 JWT）
+
+##### GET `/api/v1/accounts` — 分页
+
+**Query 参数**：
+| 参数 | 类型 | 说明 |
+|------|------|------|
+| pageNum | long | 页码，默认 1 |
+| pageSize | long | 每页大小，默认 10 |
+| keyword | string | 模糊匹配 username/email/phone |
+| status | int | 0=禁用，1=启用 |
+
+**响应**：
+```json
+{
+  "code": 0,
+  "data": {
+    "total": 4,
+    "pageNum": 1,
+    "pageSize": 10,
+    "records": [
+      {
+        "id": 1,
+        "username": "admin",
+        "email": "admin@gac-lms.local",
+        "phone": "13800000001",
+        "status": 1,
+        "lastLoginAt": "2026-07-09 12:00:00",
+        "createTime": "2026-07-09 12:00:00",
+        "roles": [
+          { "id": 1, "code": "ADMIN", "name": "超级管理员" }
+        ]
+      }
+    ]
+  }
+}
 ```
+
+##### GET `/api/v1/accounts/{id}` — 详情
+
+**响应**：同上 records 单条元素。
+
+##### POST `/api/v1/accounts` — 创建
+
+**请求体**：
+```json
+{
+  "username": "newuser01",
+  "password": "Initial@1234",
+  "email": "newuser01@gac-lms.local",
+  "phone": "13900000000",
+  "roleIds": [3]
+}
+```
+
+| 错误码 | 含义 |
+|--------|------|
+| 20002 | 登录名已存在 |
+
+##### PUT `/api/v1/accounts/{id}` — 更新
+
+**请求体**（只改这些字段，username/password 不可改）：
+```json
+{
+  "email": "newemail@gac-lms.local",
+  "phone": "13900000000",
+  "status": 1
+}
+```
+
+##### POST `/api/v1/accounts/{id}/enable` — 启用
+
+##### POST `/api/v1/accounts/{id}/disable` — 停用
+
+##### POST `/api/v1/accounts/{id}/reset-password` — 管理员重置
+
+**请求体**：`{ "newPassword": "Reset@1234" }`
+
+##### POST `/api/v1/accounts/{id}/change-password` — 自己改密
+
+**请求体**：
+```json
+{
+  "oldPassword": "Old@1234",
+  "newPassword": "New@1234"
+}
+```
+
+| 错误码 | 含义 |
+|--------|------|
+| 10003 | FORBIDDEN - 只能修改自己的密码 |
+| 20003 | 旧密码不正确 |
+
+##### GET `/api/v1/accounts/{id}/roles` — 查账号角色
+
+**响应**：
+```json
+{
+  "code": 0,
+  "data": [
+    { "id": 2, "code": "TEACHER", "name": "教师" },
+    { "id": 3, "code": "STUDENT", "name": "学员" }
+  ]
+}
+```
+
+##### POST `/api/v1/accounts/{id}/roles` — 分配角色（替换式）
+
+**请求体**：`{ "roleIds": [2, 3] }`
+
+**响应**：`{ "code": 0, "data": 2 }`（data = 成功分配的角色数）
+
+| 错误码 | 含义 |
+|--------|------|
+| 20001 | 账号不存在 |
+| 20001 | 部分角色 ID 不存在 |
+
+##### GET `/api/v1/accounts/health` — 健康检查（无需 JWT）
+
+---
+
+### 2.2 角色权限管理（3.3.1）
+
+#### `/api/v1/roles/**`（需 JWT）
+
+##### GET `/api/v1/roles/all` — 所有启用角色（下拉用）
+
+**Query**：`?category=` 可选过滤（不传查全部）
+
+**响应**：
+```json
+{
+  "code": 0,
+  "data": [
+    { "id": 1, "code": "ADMIN", "name": "超级管理员", "description": "拥有系统全部权限", "sort": 1, "status": 1, "permissionIds": [1, 2, 3, ...] }
+  ]
+}
+```
+
+##### GET `/api/v1/roles` — 分页
+
+**Query**：`pageNum, pageSize, keyword`
+
+##### GET `/api/v1/roles/{id}` — 详情
+
+##### POST `/api/v1/roles` — 创建
+
+**请求体**：
+```json
+{
+  "code": "HR",
+  "name": "HR经理",
+  "description": "人力资源管理",
+  "sort": 10
+}
+```
+
+| 错误码 | 含义 |
+|--------|------|
+| 20002 | 角色编码已存在 |
+
+##### PUT `/api/v1/roles/{id}` — 更新（不可改 code）
+
+##### DELETE `/api/v1/roles/{id}` — 删除
+
+| 错误码 | 含义 |
+|--------|------|
+| 20004 | 该角色被 N 个账号引用，无法删除 |
+
+##### POST `/api/v1/roles/{id}/permissions` — 分配权限（替换式）
+
+**请求体**：`{ "permissionIds": [1, 2, 3] }`
+
+---
 
 ### 2.3 题目管理（3.3.3）
 
-```
-GET    /api/v1/questions                 # 题目列表（分页 + 分类筛选）
-POST   /api/v1/questions                 # 创建题目
-GET    /api/v1/questions/{id}            # 题目详情
-PUT    /api/v1/questions/{id}            # 更新题目
-DELETE /api/v1/questions/{id}            # 删除题目
-POST   /api/v1/questions/import          # 批量导入
-GET    /api/v1/questions/export          # 批量导出
-GET    /api/v1/questions/tags            # 标签列表
-GET    /api/v1/questions/categories      # 分类树
-```
+#### 2.3.1 题目 CRUD `/api/v1/questions/**`（需 JWT）
 
-### 2.4 试卷管理（3.3.4）
+##### GET `/api/v1/questions` — 分页
 
-```
-GET    /api/v1/papers                    # 试卷列表
-POST   /api/v1/papers                    # 创建试卷（手动选题）
-POST   /api/v1/papers/auto               # 抽题组卷（按策略自动）
-GET    /api/v1/papers/{id}               # 试卷详情
-PUT    /api/v1/papers/{id}               # 更新试卷
-DELETE /api/v1/papers/{id}               # 删除试卷
-POST   /api/v1/papers/{id}/publish       # 发布试卷
-POST   /api/v1/papers/{id}/unpublish     # 取消发布
-```
+**Query 参数**：
+| 参数 | 类型 | 说明 |
+|------|------|------|
+| pageNum | long | 页码，默认 1 |
+| pageSize | long | 每页大小，默认 10 |
+| type | string | SINGLE/MULTI/JUDGE/ESSAY/FILL |
+| difficulty | int | 1-5 |
+| tagId | long | 按标签过滤（W3 优化 SQL JOIN） |
+| keyword | string | 模糊匹配 stem |
+| status | int | 0=草稿，1=已发布 |
 
-### 2.5 考试管理（3.3.5）
+##### GET `/api/v1/questions/{id}` — 详情
 
-```
-GET    /api/v1/exams                     # 考试列表
-POST   /api/v1/exams                     # 创建考试
-GET    /api/v1/exams/{id}                # 考试详情
-PUT    /api/v1/exams/{id}                # 更新考试
-DELETE /api/v1/exams/{id}                # 删除考试
-POST   /api/v1/exams/{id}/publish        # 发布考试
-POST   /api/v1/exams/{id}/close          # 关闭考试
-GET    /api/v1/exams/{id}/scope          # 参考人员范围
-PUT    /api/v1/exams/{id}/scope          # 设置参考人员
-GET    /api/v1/exams/{id}/submit-rules   # 交卷规则
-PUT    /api/v1/exams/{id}/submit-rules   # 设置交卷规则
-```
-
-#### 交卷规则
-
+**响应**：
 ```json
 {
-  "autoSubmit": true,
-  "autoSubmitOnTimeout": true,
-  "allowManualSubmit": true,
-  "allowSaveProgress": true
+  "code": 0,
+  "data": {
+    "id": 1,
+    "type": "SINGLE",
+    "stem": "Java 中，用于保证多个线程间共享变量可见性的关键字是？",
+    "analysis": "volatile 强制线程从主内存读写变量的最新值。",
+    "difficulty": 2,
+    "defaultScore": 5.00,
+    "categoryId": null,
+    "status": 1,
+    "answer": "C",                          // 字符串 / 数组 / 布尔（按 type 解释）
+    "options": [
+      { "id": 1, "optKey": "A", "optValue": "synchronized", "isCorrect": false, "sort": 1 },
+      { "id": 3, "optKey": "C", "optValue": "volatile",    "isCorrect": true,  "sort": 3 }
+    ],
+    "tagIds": [1, 4],
+    "createTime": "2026-07-09 12:00:00"
+  }
 }
 ```
+
+> **answer 字段格式**（由 `type` 决定，**前端必须按 type 解释**）：
+>
+> | type | answer 类型 | 示例 |
+> |------|------------|------|
+> | SINGLE | string | `"C"` |
+> | MULTI | string[] | `["A", "B"]` |
+> | JUDGE | boolean | `true` |
+> | ESSAY | string 或 string[] | `"参考答案..."` |
+> | FILL | string[] | `["答案1", "答案2"]` |
+
+##### POST `/api/v1/questions` — 创建
+
+**请求体**（单选题示例）：
+```json
+{
+  "type": "SINGLE",
+  "stem": "Java 中用于保证线程间可见性的关键字是？",
+  "analysis": "volatile 强制线程从主内存读写变量的最新值",
+  "difficulty": 2,
+  "defaultScore": 5.00,
+  "answer": "C",
+  "options": [
+    { "optKey": "A", "optValue": "synchronized", "isCorrect": false, "sort": 1 },
+    { "optKey": "B", "optValue": "final",       "isCorrect": false, "sort": 2 },
+    { "optKey": "C", "optValue": "volatile",    "isCorrect": true,  "sort": 3 },
+    { "optKey": "D", "optValue": "static",      "isCorrect": false, "sort": 4 }
+  ],
+  "tagIds": [1, 4]
+}
+```
+
+| 错误码 | 含义 |
+|--------|------|
+| 20003 | 答案格式不对（如 SINGLE 答案非 string，JUDGE 答案非 boolean） |
+| 20003 | SINGLE/MULTI 至少 2 选项 / 至少 1 正确答案 / SINGLE 仅 1 个正确答案 |
+
+##### PUT `/api/v1/questions/{id}` — 更新
+
+**约束**：
+- **type 不可改**（改动会破坏已发布数据的关联）
+- options / tagIds 用替换式（传空数组 = 清空）
+
+##### DELETE `/api/v1/questions/{id}` — 软删
+
+| 错误码 | 含义 |
+|--------|------|
+| 20004 | 已发布的题目不能删除，请先下架 |
+
+##### POST `/api/v1/questions/batch-delete` — 批量软删
+
+**请求体**：`{ "ids": [6, 7, 8] }`
+
+**响应**：成功 + 失败 ID 在错误信息里（如"成功 2 条，失败 1 条。失败 ID：[9999]"）
+
+##### POST `/api/v1/questions/{id}/publish` — 发布（status 0→1）
+
+| 错误码 | 含义 |
+|--------|------|
+| 20001 | 题目不存在 |
+| 20004 | 题目已发布，无需重复操作 |
+| 20003 | 题目无答案，不能发布 |
+
+##### POST `/api/v1/questions/{id}/unpublish` — 取消发布（status 1→0）
+
+| 错误码 | 含义 |
+|--------|------|
+| 20001 | 题目不存在 |
+| 20004 | 题目未发布，无需取消 |
+| 20004 | （W4）被试卷引用，无法取消 |
+
+##### POST `/api/v1/questions/batch-publish` — 批量发布
+
+**Query**：`?ids=1,2,3`
+
+> 部分失败静默跳过（单条失败不影响其他），整体仍返回 code=0。
+
+##### GET `/api/v1/questions/health` — 健康检查（无需 JWT）
+
+---
+
+#### 2.3.2 标签管理 `/api/v1/tags/**`（需 JWT）
+
+##### GET `/api/v1/tags` — 列表
+
+**Query**：`?category=题目`（可选，按 category 过滤，默认 `题目`）
+
+**响应**：
+```json
+{
+  "code": 0,
+  "data": [
+    { "id": 1, "name": "Java", "category": "题目", "useCount": 5 }
+  ]
+}
+```
+
+##### POST `/api/v1/tags?name=Redis&category=题目` — 创建
+
+##### PUT `/api/v1/tags/{id}` — 更新
+
+##### DELETE `/api/v1/tags/{id}` — 删除
+
+| 错误码 | 含义 |
+|--------|------|
+| 20004 | 该标签被 N 个题目引用，无法删除 |
+
+---
+
+### 2.4 人员管理（3.3.2）
+
+> **状态**：W2.3 已实现，详细字段契约见 [3.3.2-人员管理开发总结.md](3.3.2-人员管理开发总结.md)。
+
+#### 人员 CRUD `/api/v1/persons/**`（需 JWT）
+
+| 方法 | 路径 | 说明 |
+|------|------|------|
+| GET | `/persons` | 分页 + keyword + departmentId + status |
+| GET | `/persons/{id}` | 详情（含账号关联 + 部门列表） |
+| POST | `/persons` | 创建（可选 `createAccount=true` 同时创建账号） |
+| PUT | `/persons/{id}` | 更新 |
+| DELETE | `/persons/{id}` | 离职（软删） |
+| GET | `/persons/{id}/departments` | 查询人员的部门列表 |
+| POST | `/persons/{id}/departments` | 分配部门（替换式 + 主部门标记） |
+
+**创建人员 body**（可选联动账号）：
+```json
+{
+  "employeeNo": "E9004",
+  "name": "测试人员",
+  "gender": 1,
+  "mobile": "13900009004",
+  "email": "e9004@gac-lms.local",
+  "status": 1,
+  "createAccount": true,
+  "username": "e9004",
+  "password": "Test@1234",
+  "roleIds": [3],
+  "departmentIds": [3, 4],
+  "primaryDepartmentId": 4
+}
+```
+
+| 错误码 | 含义 |
+|--------|------|
+| 20001 | 人员不存在 |
+| 20002 | 工号已存在 |
+| 10001 | 主部门必须是部门列表之一 |
+
+#### 部门 CRUD `/api/v1/departments/**`（需 JWT）
+
+| 方法 | 路径 | 说明 |
+|------|------|------|
+| GET | `/departments/tree` | 部门树（全量递归） |
+| GET | `/departments/all` | 所有部门（扁平，下拉用） |
+| POST | `/departments` | 新建（Query 参数：name/code/parentId/sort/leaderId） |
+| PUT | `/departments/{id}` | 更新 |
+| DELETE | `/departments/{id}` | 删除（无子部门且无人员） |
+
+| 错误码 | 含义 |
+|--------|------|
+| 20001 | 部门不存在 |
+| 20002 | 同级部门名称已存在 |
+| 20004 | 有子部门/有人员，无法删除 |
+
+### 2.5 试卷管理（3.3.4）—— 待开发
+
+> W2.3 计划开发。包含自动抽题组卷算法（最复杂的接口）。
+
+### 2.6 考试管理（3.3.5）—— 待开发
+
+> W2.3 计划开发。含状态机 + 定时任务 + 参考范围。
+
+---
+
+### 2.7 通用约定
+
+| 项 | 约定 |
+|----|------|
+| **认证** | 除 `/api/v1/auth/**`、`/actuator/health`、Swagger UI、`/api/v1/*/health` 外，所有接口需 `Authorization: Bearer {token}` |
+| **JWT 有效期** | 默认 12 小时（720 分钟），可通过 `JWT_EXPIRE_MINUTES` 环境变量调整 |
+| **JWT Claims** | `sub`(userId) / `username` / `roles` / `perms` |
+| **密码策略** | BCrypt 强度 10，长度 ≥ 8，含字母+数字 |
+| **审计字段** | 所有 Entity 由 `MyMetaObjectHandler` 自动填充 `createBy/createTime/updateBy/updateTime` |
+| **逻辑删除** | `@TableLogic` 字段 `deleted`（0=未删，1=已删），查询自动过滤 |
+| **乐观锁** | 主表用 `@Version` 字段，中间表不用 |
+| **分页响应** | `{ total, pageNum, pageSize, records }` |
+| **错误码** | 0=成功 / 1xxxx=通用 / 2xxxx=业务 / 3xxxx=第三方 |
 
 ---
 
@@ -350,93 +710,7 @@ Content-Type: application/json
 
 ---
 
-## 5. 系统集成模块（3.3.11，方雨菲负责）
-
-> 横跨基础与扩展两侧，本节列出**方雨菲负责部分**（AI 集成、站内信、Webhook）。
-> 邮件发送底层由 SMTP 实现，考试提醒、成绩发布由方雨菲编写，调用方为王茗瑾的账号/考试模块。
-
-### 5.1 邮件通知（W4 实现）
-
-```
-POST /api/v1/integration/email/send              # 通用邮件发送
-POST /api/v1/integration/email/template          # 模板邮件（考试提醒/成绩发布）
-POST /api/v1/integration/email/batch             # 批量发送
-GET  /api/v1/integration/email/logs              # 发送日志查询
-```
-
-#### 模板邮件（考试提醒）
-
-```http
-POST /api/v1/integration/email/template
-Content-Type: application/json
-
-{
-  "templateCode": "EXAM_REMIND",
-  "to": ["zhangsan@gac.local"],
-  "params": {
-    "examName": "Java 高级开发考试",
-    "startTime": "2026-07-15 14:00",
-    "duration": 60
-  }
-}
-```
-
-### 5.2 站内信（W4 实现）
-
-```
-POST /api/v1/integration/message/push            # 推送单条站内信
-POST /api/v1/integration/message/batch           # 批量推送
-GET  /api/v1/integration/message/unread-count    # 当前用户未读数
-GET  /api/v1/integration/message/list            # 收件箱列表
-POST /api/v1/integration/message/{id}/read       # 标记已读
-```
-
-#### 推送站内信
-
-```http
-POST /api/v1/integration/message/push
-Content-Type: application/json
-
-{
-  "userId": 1001,
-  "type": "EXAM_REMIND",
-  "title": "【考试提醒】您有一场待考",
-  "content": "《Java 高级开发》考试将于明日 14:00 开始，请准时参加。"
-}
-```
-
-### 5.3 Webhook 推送（W5 实现）
-
-```
-GET    /api/v1/integration/webhooks              # Webhook 配置列表
-POST   /api/v1/integration/webhooks              # 新增 Webhook
-PUT    /api/v1/integration/webhooks/{id}         # 更新配置
-DELETE /api/v1/integration/webhooks/{id}         # 删除配置
-POST   /api/v1/integration/webhooks/{id}/test    # 测试推送
-GET    /api/v1/integration/webhooks/{id}/logs    # 推送历史
-```
-
-### 5.4 系统集成事件总线（W5 实现）
-
-业务模块（考试发布、成绩发布、错题入库）通过 Spring `ApplicationEventPublisher`
-发布事件，由 `3.3.11` 监听并触发邮件 / 站内信 / Webhook 推送：
-
-```java
-// 业务模块发布
-applicationEventPublisher.publishEvent(new ExamPublishedEvent(examId, examName));
-
-// 3.3.11 监听
-@EventListener
-public void onExamPublished(ExamPublishedEvent event) {
-    // 1. 给所有参考人员发站内信
-    // 2. 触发邮件模板（如果开启了邮件通知）
-    // 3. 推送 Webhook
-}
-```
-
----
-
-## 6. 待王茗瑾对齐的依赖接口
+## 5. 待王茗瑾对齐的依赖接口
 
 | 你需要调用 | 接口 | 用途 |
 |-----------|------|------|
@@ -444,5 +718,6 @@ public void onExamPublished(ExamPublishedEvent event) {
 | 考试数据 | `GET /api/v1/exams/{id}` | 校验考试周期 / 参考范围 |
 | 题目数据 | `GET /api/v1/questions/{id}` | 在线作答加载题目 |
 | 用户身份 | `GET /api/v1/auth/me` | 当前用户 |
+| 邮件通知 | `POST /api/v1/integrations/email` | 考试提醒 |
 
 > ⚠️ 以上接口**字段命名和路径**需要在 W1 末由王茗瑾最终确认，W2 冻结。

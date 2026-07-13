@@ -595,4 +595,43 @@ CREATE TABLE `ai_invoke_log` (
   KEY `idx_create_time` (`create_time`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COMMENT='AI 调用日志';
 
+-- -----------------------------------------------------
+-- 3.3.11 系统集成：邮件发送日志
+-- -----------------------------------------------------
+DROP TABLE IF EXISTS `sys_email_log`;
+CREATE TABLE `sys_email_log` (
+  `id`             bigint       NOT NULL,
+  `template_code`  varchar(64)  DEFAULT NULL,
+  `to_email`       varchar(128) NOT NULL,
+  `subject`        varchar(256) DEFAULT NULL,
+  `content`        text,
+  `status`         tinyint      NOT NULL DEFAULT 0 COMMENT '0=待发 1=成功 2=失败',
+  `error_message`  varchar(512) DEFAULT NULL,
+  `create_time`    datetime     DEFAULT CURRENT_TIMESTAMP,
+  PRIMARY KEY (`id`),
+  KEY `idx_template` (`template_code`),
+  KEY `idx_to_email` (`to_email`),
+  KEY `idx_create_time` (`create_time`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COMMENT='邮件发送日志';
+
+-- -----------------------------------------------------
+-- 3.3.11 系统集成：Webhook 配置
+-- -----------------------------------------------------
+DROP TABLE IF EXISTS `sys_webhook_config`;
+CREATE TABLE `sys_webhook_config` (
+  `id`            bigint       NOT NULL,
+  `name`          varchar(128) NOT NULL COMMENT 'Webhook 名称',
+  `url`           varchar(512) NOT NULL COMMENT '回调 URL',
+  `events`        varchar(512) DEFAULT NULL COMMENT '订阅事件类型（逗号分隔）',
+  `secret`        varchar(128) DEFAULT NULL COMMENT '签名密钥',
+  `status`        tinyint      NOT NULL DEFAULT 1 COMMENT '0=禁用 1=启用',
+  `create_by`     bigint       DEFAULT NULL,
+  `create_time`   datetime     DEFAULT CURRENT_TIMESTAMP,
+  `update_by`     bigint       DEFAULT NULL,
+  `update_time`   datetime     DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+  `deleted`       tinyint(1)   NOT NULL DEFAULT 0,
+  PRIMARY KEY (`id`),
+  KEY `idx_status` (`status`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COMMENT='Webhook 配置';
+
 SET FOREIGN_KEY_CHECKS = 1;

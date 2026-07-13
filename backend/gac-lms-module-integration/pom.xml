@@ -25,6 +25,11 @@
             <artifactId>gac-lms-infrastructure</artifactId>
             <version>${project.version}</version>
         </dependency>
+        <dependency>
+            <groupId>com.gac.lms</groupId>
+            <artifactId>gac-lms-ai</artifactId>
+            <version>${project.version}</version>
+        </dependency>
         <!-- W4 接入邮件时再加 jakarta.mail / spring-boot-starter-mail -->
     </dependencies>
 </project>
